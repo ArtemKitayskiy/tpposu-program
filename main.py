@@ -55,7 +55,6 @@ def check_credentials():
         messagebox.showerror("Ошибка авторизации", result[1])
     
 
-
 def open_main_window():
     main_window = tk.Toplevel(root)
     main_window.title("Главное окно")
