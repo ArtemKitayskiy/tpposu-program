@@ -49,7 +49,7 @@ def set_user_active_status(login):
 def get_userid_by_login(login):
     con = sqlite3.connect(db_name)
     cur = con.cursor()
-    command = f"""SELECT user_id FROM users WHERE login == '{login}' """
+    command = f"""SELECT id FROM users WHERE login == '{login}' """
     cur.execute(command)
     result = cur.fetchall()
     cur.close()
@@ -79,8 +79,11 @@ def check_user_password(login, password):
         cur.close()
     except:
         return [False,'Пользователя не существует']
-    if user_passwd[0][0] == password:
-        return [True,'Успешная авторизация']
+    try:
+        if user_passwd[0][0] == password:
+            return [True,'Успешная авторизация']
+    except:
+        return [False,'Введите пароль']
     else:
         return [False,'Неверный пароль']
 

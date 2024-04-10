@@ -24,8 +24,8 @@ def add_data_in_table(data, user_id, exp_date, comment):
 
     print('saving started')
     start_time = datetime.now()
-    data = np.column_stack(([ex_id] * len(data), data))
-    cur.executemany("INSERT INTO exp_logs VALUES(NULL,?,?,?,?,?,?,?,?,?,?,?,?)", data)
+    data = np.column_stack(([ex_id] * len(data),data,['NULL'] * len(data),['NULL'] * len(data)))
+    cur.executemany("INSERT INTO exp_logs (exp_id, cad_num, ch_1, ch_2, ch_3, ch_4, ch6_disp, ch6_mean, ch_14, ch_44, ch_54, ch_65, ch_7, ch_74) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", data)
     con.commit()
     cur.close()
     print('saving finished:', datetime.now() - start_time)

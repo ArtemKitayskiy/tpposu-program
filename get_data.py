@@ -1,8 +1,9 @@
 from model.plant import Plant
 from model.plantUtils import get_data_from_model
 from bdUtils import signAndLog, addDataToDB
+import os 
 
-plant = Plant('model\plant.dll')
+plant = Plant(f'{os.path.dirname(__file__)}/model/plant.dll')
 
 conf = {
     "№ Кадра": "cad_num",

@@ -1,8 +1,13 @@
 import sys
 import tkinter as tk
+import datetime
 from get_data import *
 from tkinter import messagebox, ttk
 from bdUtils import addDataToDB, signAndLog
+
+
+global user_login
+user_login = ""
 
 def out_table(window_name, data):
 
@@ -91,6 +96,7 @@ def check_credentials():
     if result[0] == True:
         messagebox.showinfo("Успешная авторизация", "Вы успешно авторизованы!")
         signAndLog.set_user_active_status(username)
+        user_login = username
         root.withdraw()
         open_main_window()
     else:
@@ -120,14 +126,31 @@ def open_main_window():
 
 
 def open_registration_window():
-
+    global data
+    data = {'result':[],'errors':[]}
     def out_data():
         count = int(frames_entry.get())
-        data = {'result':[],'errors':[]}
         for i in range(0,count):
             data['result'].append([i+1]+get_data()['result'])
-            data['errors'].append([i+1]+get_data()['errors'])
+            data['errors'].append(get_data()['errors'])
         out_table(new_registration_window, data)
+
+        def safe_data():
+            user_id = signAndLog.get_userid_by_login(user_login)
+            addDataToDB.add_data_in_table(data['result'], user_id, datetime.datetime.now(), comm_entry.get())
+
+
+        comm_label = tk.Label(new_registration_window, text="Комментарий:")
+        comm_label.pack(side=tk.LEFT, padx=5, pady=5)
+
+        comm_entry = tk.Entry(new_registration_window)
+        comm_entry.pack(side=tk.LEFT, padx=5, pady=5)
+
+        start_button = tk.Button(new_registration_window, text="Сохранить", command=safe_data)
+        start_button.pack(side=tk.LEFT, padx=5, pady=5)
+        
+        
+
 
     new_registration_window = tk.Toplevel(root)
     new_registration_window.title("Окно регистрации данных")
