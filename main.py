@@ -72,7 +72,6 @@ root.title("Окно авторизации")
 root.geometry("400x200")
 root.resizable(False, False)
 
-
 # Создание и размещение виджетов
 label_username = tk.Label(root, text="Логин:")
 label_username.grid(row=0, column=0, sticky=tk.E)
