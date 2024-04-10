@@ -1,6 +1,11 @@
+import sys
 import tkinter as tk
 from tkinter import messagebox
 
+
+def on_key_press(event):
+    if event.keysym == 'Return':
+        button_login.invoke()
 
 def check_credentials():
     username = entry_username.get()
@@ -8,22 +13,26 @@ def check_credentials():
 
     if username in ["Наников", "Китайский", "Викторов"] and password == "password":
         messagebox.showinfo("Успешная авторизация", "Вы успешно авторизованы!")
+        root.withdraw()
         open_main_window()
     else:
         messagebox.showerror("Ошибка авторизации", "Неверный логин или пароль")
+    
 
 
 def open_main_window():
     main_window = tk.Toplevel(root)
     main_window.title("Главное окно")
     main_window.geometry("400x200")
+    main_window.resizable(False, False)
 
     # Создаем словарь, где ключами являются названия кнопок, а значениями - функции для открытия соответствующих окон
     buttons_actions = {
         "Регистрация данных": open_registration_window,
         "Проведение HTP": open_htp_window,
         "Управление данными": open_data_management_window,
-        "Информация о ПО": open_software_info_window
+        "Информация о ПО": open_software_info_window,
+        "Выход": sys.exit,
     }
 
     # Создаем кнопки на основе элементов словаря
@@ -61,6 +70,8 @@ def open_software_info_window():
 root = tk.Tk()
 root.title("Окно авторизации")
 root.geometry("400x200")
+root.resizable(False, False)
+
 
 # Создание и размещение виджетов
 label_username = tk.Label(root, text="Логин:")
@@ -83,5 +94,6 @@ button_login = tk.Button(root, text="Ввод", command=check_credentials, width
 button_login.grid(row=2, columnspan=2)
 button_login.place(x=150, y=110)
 
+root.bind("<Return>", on_key_press)
 # Запуск главного цикла обработки событий
 root.mainloop()
