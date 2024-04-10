@@ -82,13 +82,14 @@ def get_data_from_model(plant, channels_list = channels):
                         print(result, channel)
                         return []
 
-                if channel == 5:
+                if channel == 6:
                     measure = result[0]
                     measures.append(measure)
                     added_measures = plant.get_measures_from_channel(channel, 5)
                     added_measures.append(measure)
                     result = get_std(added_measures)
                     measure = result[0]
+
 
             if not (channel == 7 or channel == 74):
                 measures.append(measure)
