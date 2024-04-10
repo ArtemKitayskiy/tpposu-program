@@ -1,22 +1,58 @@
 import sys
 import tkinter as tk
 from tkinter import messagebox
+from bdUtils import addDataToDB, signAndLog
 
 
 def on_key_press(event):
     if event.keysym == 'Return':
         button_login.invoke()
 
+def registration_window():
+    registration_window = tk.Toplevel(root)
+    registration_window.title("Окно регистрации")
+    registration_window.geometry("400x200")
+    registration_window.resizable(False, False)
+
+    label_username = tk.Label(registration_window, text="Логин:")
+    label_username.grid(row=0, column=0, sticky=tk.E)
+    label_username.place(x=100, y=50)
+
+    reg_user = tk.Entry(registration_window)
+    reg_user.grid(row=0, column=1)
+    reg_user.place(x=150, y=50)
+
+    label_password = tk.Label(registration_window, text="Пароль:")
+    label_password.grid(row=1, column=0, sticky=tk.E)
+    label_password.place(x=100, y=80)
+
+    reg_password = tk.Entry(registration_window, show="*")
+    reg_password.grid(row=1, column=1)
+    reg_password.place(x=150, y=80)
+
+
+    def add_user():
+        username = reg_user.get()
+        password = reg_password.get()
+        messagebox.showinfo('Информация о регистрации',signAndLog.add_user(username, password))
+        registration_window.destroy()
+
+    button_login = tk.Button(registration_window, text="Регистрация", command=add_user, width=10, height=2)
+    button_login.grid(row=2, columnspan=2)
+    button_login.place(x=150, y=110)
+    
+
 def check_credentials():
     username = entry_username.get()
     password = entry_password.get()
+    result = signAndLog.check_user_password(username,password)
 
-    if username in ["Наников", "Китайский", "Викторов"] and password == "password":
+    if result[0] == True:
         messagebox.showinfo("Успешная авторизация", "Вы успешно авторизованы!")
         root.withdraw()
         open_main_window()
     else:
-        messagebox.showerror("Ошибка авторизации", "Неверный логин или пароль")
+        messagebox.showerror("Ошибка авторизации", result[1])
     
 
 
@@ -92,6 +128,11 @@ entry_password.place(x=150, y=80)
 button_login = tk.Button(root, text="Ввод", command=check_credentials, width=10, height=2)
 button_login.grid(row=2, columnspan=2)
 button_login.place(x=150, y=110)
+
+button_registraion = tk.Button(root, text="Регистрация", command=registration_window, width=10, height=2)
+button_registraion.grid(row=2, columnspan=2)
+button_registraion.place(x=150, y=150)
+
 
 root.bind("<Return>", on_key_press)
 # Запуск главного цикла обработки событий

@@ -11,11 +11,10 @@ def add_user(login, password):
                            VALUES ('{login}', '{password}', 0) """
         cur.execute(command)
         con.commit()
-        cur.close()
         response = 'Регистрация прошла успешно'
     except:
         response = 'Пользователь сущестсвует'
-        cur.close()
+    cur.close()
     return response
 
 
@@ -74,13 +73,16 @@ def check_user_password(login, password):
     con = sqlite3.connect(db_name)
     cur = con.cursor()
     command = f"""SELECT password FROM users WHERE login == '{login}' """
-    cur.execute(command)
-    user_passwd = cur.fetchall()
-    cur.close()
+    try:
+        cur.execute(command)
+        user_passwd = cur.fetchall()
+        cur.close()
+    except:
+        return [False,'Пользователя не существует']
     if user_passwd[0][0] == password:
-        return True
+        return [True,'Успешная авторизация']
     else:
-        return False
+        return [False,'Неверный пароль']
 
 
 def get_users_logins():
