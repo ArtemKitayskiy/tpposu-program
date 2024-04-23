@@ -13,6 +13,7 @@ def pos_control(a, b):
 
 # КС - контроль стабильности величины X в кадре
 def const_control(x):
+    x = [round(i,3) for i in x]
     if max(x) == min(x):
         return [x, True]
     else:
@@ -49,11 +50,11 @@ channels = {
     3: "",
     4: pos_control(0, 1),
     6: [get_mean, 4],
-    7: [const_control, 2],
     14: "",
     44: "",
     54: get_rf,
     65: normalize_measure(100, 300),
+    7: [const_control, 2],
     74: [const_control, 3]
 }
 
@@ -62,11 +63,11 @@ def get_data_from_model(plant, channels_list = channels):
         measures = []
         errors = []
         for channel, prop in channels_list.items():
-            measure = plant.measure(channel)
+            measure = round(plant.measure(channel),3)
             if callable(prop):
                 result = prop(measure)
                 if result[1]:
-                    measure = result[0]
+                    measure = round(result[0],3)
                 else:
                     # Проброс сообщения об ошибке
                     errors.append('Измерение с канала ' + str(channel) + ' выходит из интервала позиционных ограничений')
@@ -81,6 +82,8 @@ def get_data_from_model(plant, channels_list = channels):
                         # Сброс опроса
                         print(result, channel)
                         return []
+                    else:
+                        measure = "; ".join(list(map(str,result[0])))
 
                 if channel == 6:
                     measure = result[0]
@@ -88,11 +91,10 @@ def get_data_from_model(plant, channels_list = channels):
                     added_measures = plant.get_measures_from_channel(channel, 5)
                     added_measures.append(measure)
                     result = get_std(added_measures)
-                    measure = result[0]
+                    measure = round(result[0],3)
 
 
-            if not (channel == 7 or channel == 74):
-                measures.append(measure)
+            measures.append(measure)
 
         return measures, errors
     return f

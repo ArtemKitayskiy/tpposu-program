@@ -17,6 +17,8 @@ conf = {
     "Канал 44": "ch_44",
     "Канал 54": "ch_54",
     "Канал 65": "ch_65",
+    "Канал 7": "",
+    "Канал 74": "",
 }
 def get_data():
     get_data = get_data_from_model(plant)

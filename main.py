@@ -132,7 +132,11 @@ def open_registration_window():
         count = int(frames_entry.get())
         for i in range(0,count):
             data['result'].append([i+1]+get_data()['result'])
-            data['errors'].append(get_data()['errors'])
+            
+            errors = get_data()['errors']
+            if len(data['errors'])!=0:
+                messagebox.showerror("Ошибка авторизации", errors)
+          
         out_table(new_registration_window, data)
 
         def safe_data():
@@ -181,8 +185,49 @@ def open_htp_window():
 def open_data_management_window():
     new_data_management_window = tk.Toplevel(root)
     new_data_management_window.title("Окно управления данными")
-    new_data_management_window.geometry("400x200")
+    new_data_management_window.geometry("1280x720")
     center_window(new_data_management_window)
+
+    dropdown_frame = tk.Frame(new_data_management_window)
+    dropdown_frame.grid(row=0, column=0, padx=10, pady=10)
+
+    label = tk.Label(dropdown_frame, text="Выберите элемент:")
+    label.pack(side='top')
+
+    dropdown_values = ["Элемент 1", "Элемент 2", "Элемент 3", "Элемент 4"]
+    dropdown = ttk.Combobox(dropdown_frame, values=dropdown_values, state='readonly')
+    dropdown.pack(side='left')
+
+    dropdown_frame_2 = tk.Frame(new_data_management_window)
+    dropdown_frame_2.grid(row=0, column=1, padx=10, pady=10)
+
+    label_2 = tk.Label(dropdown_frame_2, text="Выберите элемент 2:")
+    label_2.pack(side='top')
+
+    dropdown_values_2 = ["Элемент A", "Элемент B", "Элемент C", "Элемент D"]
+    dropdown_2 = ttk.Combobox(dropdown_frame_2, values=dropdown_values_2, state="readonly")
+    dropdown_2.pack(side='left')
+
+    dropdown_frame_3 = tk.Frame(new_data_management_window)
+    dropdown_frame_3.grid(row=1, column=0, padx=10, pady=10)
+
+    label_3 = tk.Label(dropdown_frame_3, text="Выберите элемент 3:")
+    label_3.pack(side='top')
+
+    dropdown_values_3 = ["Элемент X", "Элемент Y", "Элемент Z"]
+    dropdown_3 = ttk.Combobox(dropdown_frame_3, values=dropdown_values_3, state="readonly")
+    dropdown_3.pack(side='left')
+
+    dropdown_frame_4 = tk.Frame(new_data_management_window)
+    dropdown_frame_4.grid(row=1, column=1, padx=10, pady=10)
+
+    label_4 = tk.Label(dropdown_frame_4, text="Выберите элемент 4:")
+    label_4.pack(side='top')
+
+    dropdown_values_4 = ["Элемент Q", "Элемент R", "Элемент S"]
+    dropdown_4 = ttk.Combobox(dropdown_frame_4, values=dropdown_values_4, state="readonly")
+    dropdown_4.pack(side='left')
+
 
 
 def open_software_info_window():
