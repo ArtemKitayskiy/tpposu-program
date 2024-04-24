@@ -87,10 +87,10 @@ def get_exp_date(exp_id):
     return result
 
 
-def get_exp_comment(exp_id):
+def get_exp_comment(selected_date):
     con = sqlite3.connect(db_name)
     cur = con.cursor()
-    command = f"""SELECT comment FROM exp_info WHERE id == '{exp_id}'"""
+    command = f"""SELECT comment FROM exp_info WHERE exp_date == '{selected_date}'"""
     cur.execute(command)
     result = cur.fetchall()
     return result[0][0]

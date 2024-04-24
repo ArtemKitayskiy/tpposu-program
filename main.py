@@ -1,9 +1,13 @@
 import sys
 import tkinter as tk
 import datetime
+import numpy as np
+import openpyxl
+import pandas as pd
 from get_data import *
 from tkinter import messagebox, ttk
 from bdUtils import addDataToDB, signAndLog
+from openpyxl.styles import Font
 
 
 global user_login
@@ -177,6 +181,8 @@ def open_registration_window():
     start_button = tk.Button(new_registration_window, text="Начать опрос", command=out_data)
     start_button.pack(side=tk.LEFT, padx=5, pady=5)
 
+
+
     
 
 
@@ -190,9 +196,12 @@ def open_htp_window():
 
 def open_data_management_window():
     selected_date = None
+    data = []
+    column_means = []
+    user_id = 0
     new_data_management_window = tk.Toplevel(root)
     new_data_management_window.title("Окно управления данными")
-    new_data_management_window.geometry("1280x720")
+    new_data_management_window.geometry("1280x800")
     center_window(new_data_management_window)
 
     columns = tuple(conf.keys())
@@ -220,16 +229,45 @@ def open_data_management_window():
     def combobox_changed(event):
 
         def date_changed(event):
+            nonlocal user_id
             nonlocal selected_date
+            nonlocal data
+            nonlocal column_means
             # Очистка всех элементов в Treeview
             for item in tree.get_children():
                 tree.delete(item)
 
-            selected_date = dropdown_3.get()[1:-1]
+            selected_date = dropdown_3.get()
             data = addDataToDB.get_exp_by_date(selected_date)
 
             for row in data:
                 tree.insert('', tk.END, values=row)
+            # Преобразование данных в массив NumPy
+            data_array = np.array(data)[:, :-2].astype(float)
+
+            # Расчет среднего по каждому столбцу
+            column_means = np.mean(data_array, axis=0)
+            column_means = np.round(column_means,2)
+            means = {
+                "Cреднее для Канала 1": 0,
+                "Cреднее для Канала 2": 0,
+                "Cреднее для Канала 3": 0,
+                "Cреднее для Канала 4": 0,
+                "Cреднее для Канала 6 сред.": 0,
+                "Cреднее для Канала 6 дисп.": 0,
+                "Cреднее для Канала 14": 0,
+                "Cреднее для Канала 44": 0,
+                "Cреднее для Канала 54": 0,
+                "Cреднее для Канала 65": 0,
+            }
+            means  = dict(zip(means, column_means[1:]))
+            info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
+            info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+            s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
+            for i,v in means.items():
+                s += f'{i}:{v}\n'
+            # Добавляем текст в виджет Text
+            info_text.insert(tk.END, s)
 
 
         selected_value = dropdown.get()
@@ -237,6 +275,7 @@ def open_data_management_window():
         user_id = signAndLog.get_userid_by_login(selected_value)
 
         dates = addDataToDB.get_exp_data_by_id(user_id)
+        dates = [i[0] for i in dates]
         dropdown_frame_3 = tk.Frame(new_data_management_window)
         dropdown_frame_3.grid(row=1, column=0, padx=10, pady=10)
 
@@ -312,6 +351,7 @@ def open_data_management_window():
     entry_2.pack(side='top')
 
     def get_filtered_data(col, sort_type, min, max):
+        nonlocal data
         for item in tree.get_children():
             tree.delete(item)
         sort_type = 'DESC' if sort_type == 'По убыванию' else ''
@@ -326,12 +366,81 @@ def open_data_management_window():
             filter_condition = ''
         
         data = addDataToDB.get_sorted_data(selected_date, conf[col], sort_type, filter_condition)
+        data_array = np.array(data)[:, :-2].astype(float)
+
+        # Расчет среднего по каждому столбцу
+        column_means = np.mean(data_array, axis=0)
+        column_means = np.round(column_means,2)
+        means = {
+            "Cреднее для Канала 1": 0,
+            "Cреднее для Канала 2": 0,
+            "Cреднее для Канала 3": 0,
+            "Cреднее для Канала 4": 0,
+            "Cреднее для Канала 6 сред.": 0,
+            "Cреднее для Канала 6 дисп.": 0,
+            "Cреднее для Канала 14": 0,
+            "Cреднее для Канала 44": 0,
+            "Cреднее для Канала 54": 0,
+            "Cреднее для Канала 65": 0,
+        }
+        means  = dict(zip(means, column_means[1:]))
+        info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
+        info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+        s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
+        for i,v in means.items():
+            s += f'{i}:{v}\n'
+        # Добавляем текст в виджет Text
+        info_text.insert(tk.END, s)
 
         for row in data:
                 tree.insert('', tk.END, values=row)
 
-    button = tk.Button(new_data_management_window, text="Установить фильтр", width=20, height=3, command= lambda: get_filtered_data(dropdown_5.get(), dropdown_4.get(), entry_1.get(), entry_2.get()))
+    button = tk.Button(new_data_management_window, text="Установить фильтр", width=20, height=3, command = lambda: get_filtered_data(dropdown_5.get(), dropdown_4.get(), entry_1.get(), entry_2.get()))
     button.grid(row=0, column=4, padx=10, pady=10, rowspan=2)
+
+    def data_to_excel(name):
+        df = pd.DataFrame(data, columns=columns)
+        # Запись DataFrame в файл Excel
+        df.to_excel(f'{name}.xlsx', index=False)
+        # обработка excel файла
+        wb_obj = openpyxl.load_workbook(f'{name}.xlsx')
+        sheet_obj = wb_obj.active
+        sheet_obj.insert_rows(1, 6)
+        
+        sheet_obj.cell(row = 1, column = 1).value = "Отчет о регистрации данных с объекта управления"
+        sheet_obj.cell(row = 1, column = 1).font = Font(bold=True)
+
+        sheet_obj.cell(row = 3, column = 1).value = f"Пользователь: {signAndLog.check_signed_users()}"
+
+        sheet_obj.cell(row = 4, column = 1).value = f"Дата регистрации: {selected_date}"
+        
+        comment = addDataToDB.get_exp_comment(selected_date)
+        if len(comment)==0:
+            comment = "Нет комментария"
+        sheet_obj.cell(row = 5, column = 1).value = f"Комментарий: {comment}"
+        wb_obj.save(f'{name}.xlsx')
+
+        messagebox.showinfo('Запись успешна','Запись успешна')
+
+    def excel_window():
+        excel_window = tk.Toplevel(root)
+        excel_window.title("Окно записи")
+        excel_window.geometry("300x100")
+        center_window(excel_window)
+        excel_window.resizable(False, False)
+
+        label_name = tk.Label(excel_window, text="Введите имя файла:")
+        label_name.grid(row=0, column=0, padx=10, pady=10)
+
+        entry_name = tk.Entry(excel_window)
+        entry_name.grid(row=1, column=0, padx=10, pady=10)
+        button_3 = tk.Button(excel_window, text="Записать в excel", width=20, height=3, command = lambda: data_to_excel(entry_name.get()))
+        button_3.grid(row=0, column=1, padx=10, pady=10, rowspan=2)
+
+
+
+    button_2 = tk.Button(new_data_management_window, text="Записать в excel", width=20, height=3, command = excel_window)
+    button_2.grid(row=10, column=4, padx=10, pady=10, rowspan=2)
 
     
 
