@@ -9,7 +9,8 @@ from bdUtils import addDataToDB, signAndLog
 global user_login
 user_login = ""
 
-def out_table(window_name, data):
+
+def out_table(window_name, data=None):
 
     # Создаем Treeview
     columns = tuple(conf.keys())
@@ -21,8 +22,11 @@ def out_table(window_name, data):
     # tree.heading('Имя', text='Имя')
     # tree.heading('Возраст', text='Возраст')
     # tree.heading('Город', text='Город')
-    errs = data['errors']
-    data = data['result']
+    if data:
+        errs = data['errors']
+        data = data['result']
+    else:
+        data = []
 
     for row in data:
         tree.insert('', tk.END, values=row)
@@ -140,6 +144,8 @@ def open_registration_window():
         out_table(new_registration_window, data)
 
         def safe_data():
+            user_login = signAndLog.check_signed_users()
+            print(user_login)
             user_id = signAndLog.get_userid_by_login(user_login)
             addDataToDB.add_data_in_table(data['result'], user_id, datetime.datetime.now(), comm_entry.get())
 
@@ -183,50 +189,151 @@ def open_htp_window():
 
 
 def open_data_management_window():
+    selected_date = None
     new_data_management_window = tk.Toplevel(root)
     new_data_management_window.title("Окно управления данными")
     new_data_management_window.geometry("1280x720")
     center_window(new_data_management_window)
 
+    columns = tuple(conf.keys())
+    tree = ttk.Treeview(new_data_management_window, columns=columns, show="headings", height=20)
+
+    # Устанавливаем заголовки для колонок
+    for col in columns:
+        tree.heading(col, text=col)
+    # Установим автоматическое масштабирование ширины колонок
+    for column in tree['columns']:
+        tree.column(column, width = 80, stretch=True)
+    # Заполните таблицу данными, если это необходимо
+    # Пример добавления данных:
+    # tree.insert("", "end", values=("1", "John", "30", "New York"))
+
+    # Разместите таблицу внизу окна
+    tree.grid(row=2, column=0, columnspan=10, padx=10, pady=10)
+
+    # Добавьте прокрутку для таблицы при необходимости
+    scrollbar = ttk.Scrollbar(new_data_management_window, orient="vertical", command=tree.yview)
+    scrollbar.grid(row=2, column=10, sticky="ns")
+    tree.configure(yscrollcommand=scrollbar.set)
+
+
+    def combobox_changed(event):
+
+        def date_changed(event):
+            nonlocal selected_date
+            # Очистка всех элементов в Treeview
+            for item in tree.get_children():
+                tree.delete(item)
+
+            selected_date = dropdown_3.get()[1:-1]
+            data = addDataToDB.get_exp_by_date(selected_date)
+
+            for row in data:
+                tree.insert('', tk.END, values=row)
+
+
+        selected_value = dropdown.get()
+
+        user_id = signAndLog.get_userid_by_login(selected_value)
+
+        dates = addDataToDB.get_exp_data_by_id(user_id)
+        dropdown_frame_3 = tk.Frame(new_data_management_window)
+        dropdown_frame_3.grid(row=1, column=0, padx=10, pady=10)
+
+        label_3 = tk.Label(dropdown_frame_3, text="Дата")
+        label_3.pack(side='top', anchor='w')
+
+        dropdown_values_3 = ["Элемент X", "Элемент Y", "Элемент Z"]
+        dropdown_3 = ttk.Combobox(dropdown_frame_3, values=dates, state="readonly")
+        dropdown_3.pack(side='left')
+        dropdown_3.bind("<<ComboboxSelected>>", date_changed)
+
     dropdown_frame = tk.Frame(new_data_management_window)
     dropdown_frame.grid(row=0, column=0, padx=10, pady=10)
 
-    label = tk.Label(dropdown_frame, text="Выберите элемент:")
-    label.pack(side='top')
+    label = tk.Label(dropdown_frame, text="Ответственный")
+    label.pack(side='top', anchor='w')
 
-    dropdown_values = ["Элемент 1", "Элемент 2", "Элемент 3", "Элемент 4"]
+    dropdown_values = signAndLog.get_users_logins()
     dropdown = ttk.Combobox(dropdown_frame, values=dropdown_values, state='readonly')
     dropdown.pack(side='left')
+    dropdown.bind("<<ComboboxSelected>>", combobox_changed)
 
     dropdown_frame_2 = tk.Frame(new_data_management_window)
     dropdown_frame_2.grid(row=0, column=1, padx=10, pady=10)
 
-    label_2 = tk.Label(dropdown_frame_2, text="Выберите элемент 2:")
-    label_2.pack(side='top')
+    label_2 = tk.Label(dropdown_frame_2, text="Столбец для сортировки")
+    label_2.pack(side='top', anchor='w')
 
     dropdown_values_2 = ["Элемент A", "Элемент B", "Элемент C", "Элемент D"]
-    dropdown_2 = ttk.Combobox(dropdown_frame_2, values=dropdown_values_2, state="readonly")
+    dropdown_2 = ttk.Combobox(dropdown_frame_2, values=columns, state="readonly")
+    dropdown_2.set(columns[0])
     dropdown_2.pack(side='left')
 
-    dropdown_frame_3 = tk.Frame(new_data_management_window)
-    dropdown_frame_3.grid(row=1, column=0, padx=10, pady=10)
-
-    label_3 = tk.Label(dropdown_frame_3, text="Выберите элемент 3:")
-    label_3.pack(side='top')
-
-    dropdown_values_3 = ["Элемент X", "Элемент Y", "Элемент Z"]
-    dropdown_3 = ttk.Combobox(dropdown_frame_3, values=dropdown_values_3, state="readonly")
-    dropdown_3.pack(side='left')
 
     dropdown_frame_4 = tk.Frame(new_data_management_window)
     dropdown_frame_4.grid(row=1, column=1, padx=10, pady=10)
 
-    label_4 = tk.Label(dropdown_frame_4, text="Выберите элемент 4:")
-    label_4.pack(side='top')
+    label_4 = tk.Label(dropdown_frame_4, text="Порядок сортировки")
+    label_4.pack(side='top', anchor='w')
 
-    dropdown_values_4 = ["Элемент Q", "Элемент R", "Элемент S"]
+    dropdown_values_4 = ["По возрастанию", "По убыванию"]
     dropdown_4 = ttk.Combobox(dropdown_frame_4, values=dropdown_values_4, state="readonly")
+    dropdown_4.set("По возрастанию")
     dropdown_4.pack(side='left')
+
+    dropdown_frame_5 = tk.Frame(new_data_management_window)
+    dropdown_frame_5.grid(row=0, column=2, padx=10, pady=10)
+
+    label_5 = tk.Label(dropdown_frame_5, text="Канал")
+    label_5.pack(side='top', anchor='w')
+
+    dropdown_values_5 = ["Элемент Q", "Элемент R", "Элемент S"]
+    dropdown_5 = ttk.Combobox(dropdown_frame_5, values=columns, state="readonly")
+    dropdown_5.set(columns[0])
+    dropdown_5.pack(side='left')
+
+    min_entry_frame = tk.Frame(new_data_management_window)
+    min_entry_frame.grid(row=1, column=2, padx=10, pady=10)
+
+    label_6 = tk.Label(min_entry_frame, text="Минимальное")
+    label_6.pack(side='top', anchor='w')
+
+    entry_1 = tk.Entry(min_entry_frame)
+    entry_1.pack(side='top')
+
+    man_entry_frame = tk.Frame(new_data_management_window)
+    man_entry_frame.grid(row=1, column=3, padx=10, pady=10)
+
+    label_7 = tk.Label(man_entry_frame, text="Максимальное")
+    label_7.pack(side='top', anchor='w')
+
+    entry_2 = tk.Entry(man_entry_frame)
+    entry_2.pack(side='top')
+
+    def get_filtered_data(col, sort_type, min, max):
+        for item in tree.get_children():
+            tree.delete(item)
+        sort_type = 'DESC' if sort_type == 'По убыванию' else ''
+
+        if min!='' and max!='':
+            filter_condition = f'AND {conf[col]} BETWEEN {min} AND {max}'
+        elif min!='':
+            filter_condition = f'AND {conf[col]} >= {min}'
+        elif max!='':
+            filter_condition = f'AND {conf[col]} <= {max}'
+        else:
+            filter_condition = ''
+        
+        data = addDataToDB.get_sorted_data(selected_date, conf[col], sort_type, filter_condition)
+
+        for row in data:
+                tree.insert('', tk.END, values=row)
+
+    button = tk.Button(new_data_management_window, text="Установить фильтр", width=20, height=3, command= lambda: get_filtered_data(dropdown_5.get(), dropdown_4.get(), entry_1.get(), entry_2.get()))
+    button.grid(row=0, column=4, padx=10, pady=10, rowspan=2)
+
+    
 
 
 
