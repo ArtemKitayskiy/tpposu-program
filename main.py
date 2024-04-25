@@ -134,26 +134,50 @@ def open_main_window():
 
 
 def open_registration_window():
-    global data
-    data = {'result':[],'errors':[]}
+
+    new_registration_window = tk.Toplevel(root)
+    new_registration_window.title("Окно регистрации данных")
+    new_registration_window.geometry("1280x720")
+    center_window(new_registration_window)
+    data = []
+    columns = tuple(conf.keys())
+    tree = ttk.Treeview(new_registration_window, show="headings", columns=columns)
     def out_data():
+        nonlocal tree
+        nonlocal columns
+        nonlocal data
+        data = 0
+        data = []
         count = int(frames_entry.get())
+	# Очистка всех элементов в Treeview
+        for item in tree.get_children():
+            tree.delete(item)
         for i in range(0,count):
-            data['result'].append([i+1]+get_data()['result'])
+            data.append([i+1]+get_data()['result'])
             
             errors = get_data()['errors']
-            if len(data['errors'])!=0:
+            if len(errors )!=0:
                 messagebox.showerror("Ошибка авторизации", errors)
           
-        out_table(new_registration_window, data)
+        for column in columns:
+        	tree.heading(f'{column}', text=column)
+
+        for row in data:
+        	tree.insert('', tk.END, values=row)
+
+    	# Установим автоматическое масштабирование ширины колонок
+        for column in tree['columns']:
+        	tree.column(column, width = 70,stretch=True)
+
+    	# Упаковываем Treeview
+        tree.pack(expand=True, fill='both')
 
         def safe_data():
+            nonlocal data
             user_login = signAndLog.check_signed_users()
-            print(user_login)
             user_id = signAndLog.get_userid_by_login(user_login)
-            addDataToDB.add_data_in_table(data['result'], user_id, datetime.datetime.now(), comm_entry.get())
-
-
+            addDataToDB.add_data_in_table(data, user_id, datetime.datetime.now(), comm_entry.get())
+        	
         comm_label = tk.Label(new_registration_window, text="Комментарий:")
         comm_label.pack(side=tk.LEFT, padx=5, pady=5)
 
@@ -163,13 +187,6 @@ def open_registration_window():
         start_button = tk.Button(new_registration_window, text="Сохранить", command=safe_data)
         start_button.pack(side=tk.LEFT, padx=5, pady=5)
         
-        
-
-
-    new_registration_window = tk.Toplevel(root)
-    new_registration_window.title("Окно регистрации данных")
-    new_registration_window.geometry("1280x720")
-    center_window(new_registration_window)
 
     # Создание и размещение виджетов
     frames_label = tk.Label(new_registration_window, text="Число кадров:")
@@ -366,31 +383,38 @@ def open_data_management_window():
             filter_condition = ''
         
         data = addDataToDB.get_sorted_data(selected_date, conf[col], sort_type, filter_condition)
-        data_array = np.array(data)[:, :-2].astype(float)
+        print(data)
+        if data != []:
+        	data_array = np.array(data)[:, :-2].astype(float)
 
-        # Расчет среднего по каждому столбцу
-        column_means = np.mean(data_array, axis=0)
-        column_means = np.round(column_means,2)
-        means = {
-            "Cреднее для Канала 1": 0,
-            "Cреднее для Канала 2": 0,
-            "Cреднее для Канала 3": 0,
-            "Cреднее для Канала 4": 0,
-            "Cреднее для Канала 6 сред.": 0,
-            "Cреднее для Канала 6 дисп.": 0,
-            "Cреднее для Канала 14": 0,
-            "Cреднее для Канала 44": 0,
-            "Cреднее для Канала 54": 0,
-            "Cреднее для Канала 65": 0,
-        }
-        means  = dict(zip(means, column_means[1:]))
-        info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
-        info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
-        s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
-        for i,v in means.items():
-            s += f'{i}:{v}\n'
-        # Добавляем текст в виджет Text
-        info_text.insert(tk.END, s)
+        	# Расчет среднего по каждому столбцу
+        	column_means = np.mean(data_array, axis=0)
+        	column_means = np.round(column_means,2)
+        	means = {
+            	"Cреднее для Канала 1": 0,
+            	"Cреднее для Канала 2": 0,
+            	"Cреднее для Канала 3": 0,
+            	"Cреднее для Канала 4": 0,
+            	"Cреднее для Канала 6 сред.": 0,
+            	"Cреднее для Канала 6 дисп.": 0,
+            	"Cреднее для Канала 14": 0,
+            	"Cреднее для Канала 44": 0,
+            	"Cреднее для Канала 54": 0,
+            	"Cреднее для Канала 65": 0,
+        	}
+        	means  = dict(zip(means, column_means[1:]))
+        	info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
+        	info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+        	s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
+        	for i,v in means.items():
+            		s += f'{i}:{v}\n'
+        	# Добавляем текст в виджет Text
+        	info_text.insert(tk.END, s)
+        else:
+        	info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
+        	info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+        	s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
+        	info_text.insert(tk.END, s)
 
         for row in data:
                 tree.insert('', tk.END, values=row)
@@ -399,6 +423,8 @@ def open_data_management_window():
     button.grid(row=0, column=4, padx=10, pady=10, rowspan=2)
 
     def data_to_excel(name):
+        if name == "":
+                messagebox.showerror("Ошибка имени файла", "Ошибка имени файла")
         df = pd.DataFrame(data, columns=columns)
         # Запись DataFrame в файл Excel
         df.to_excel(f'{name}.xlsx', index=False)
