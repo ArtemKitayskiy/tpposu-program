@@ -12,12 +12,12 @@ from openpyxl.styles import Font
 
 global user_login
 user_login = ""
-
+columns = tuple(conf.keys())
 
 def out_table(window_name, data=None):
 
     # Создаем Treeview
-    columns = tuple(conf.keys())
+    
     tree = ttk.Treeview(window_name, show="headings", columns=columns)
     for column in columns:
         tree.heading(f'{column}', text=column)
@@ -63,6 +63,7 @@ def center_window(window):
 
 def registration_window():
     registration_window = tk.Toplevel(root)
+    root.withdraw()
     registration_window.title("Окно регистрации")
     registration_window.geometry("400x200")
     center_window(registration_window)
@@ -86,10 +87,21 @@ def registration_window():
 
 
     def add_user():
+
         username = reg_user.get()
         password = reg_password.get()
-        messagebox.showinfo('Информация о регистрации',signAndLog.add_user(username, password))
-        registration_window.destroy()
+        if username =='' and password == '':
+            messagebox.showerror("Ошибка регистарции", "Введите имя пользователя и пароль")
+        elif username == '':
+            messagebox.showerror("Ошибка регистарции", "Введите имя пользователя")
+        elif password == '':
+            messagebox.showerror("Ошибка регистарции", "Введите пароль")
+        else:
+            messagebox.showinfo('Информация о регистрации',signAndLog.add_user(username, password))
+            registration_window.destroy()
+            root.deiconify()
+            
+
 
     button_login = tk.Button(registration_window, text="Регистрация", command=add_user, width=10, height=2)
     button_login.grid(row=2, columnspan=2)
@@ -99,16 +111,23 @@ def registration_window():
 def check_credentials():
     username = entry_username.get()
     password = entry_password.get()
-    result = signAndLog.check_user_password(username,password)
-
-    if result[0] == True:
-        messagebox.showinfo("Успешная авторизация", "Вы успешно авторизованы!")
-        signAndLog.set_user_active_status(username)
-        user_login = username
-        root.withdraw()
-        open_main_window()
+    if username == '' and password == '':
+        messagebox.showerror("Ошибка авторизации", "Введите имя пользователя и пароль")
+    elif username == '':
+        messagebox.showerror("Ошибка авторизации", "Введите имя пользователя")
+    elif password == '':
+        messagebox.showerror("Ошибка авторизации", "Введите пароль")
     else:
-        messagebox.showerror("Ошибка авторизации", result[1])
+        result = signAndLog.check_user_password(username,password)
+
+        if result[0] == True:
+            messagebox.showinfo("Успешная авторизация", "Вы успешно авторизованы!")
+            signAndLog.set_user_active_status(username)
+            user_login = username
+            root.withdraw()
+            open_main_window()
+        else:
+            messagebox.showerror("Ошибка авторизации", 'Неверное имя пользователя или пароль')
     
 
 def open_main_window():
@@ -217,9 +236,55 @@ def open_registration_window():
 def open_htp_window():
     new_htp_window = tk.Toplevel(root)
     new_htp_window.title("Окно проведения HTP")
-    new_htp_window.geometry("400x200")
+    new_htp_window.geometry("1280x720")
     center_window(new_htp_window)
-    
+    tree_of_htp = ttk.Treeview(new_htp_window, columns=columns, show="headings", height=20)
+
+    # Устанавливаем заголовки для колонок
+    for col in columns:
+        tree_of_htp.heading(col, text=col)
+    # Установим автоматическое масштабирование ширины колонок
+    for column in tree_of_htp['columns']:
+        tree_of_htp.column(column, width = 80, stretch=True)
+    # Заполните таблицу данными, если это необходимо
+    # Пример добавления данных
+    # Разместите таблицу внизу окна
+    tree_of_htp.grid(row=0, column=0, columnspan=10, padx=10, pady=10, sticky='w')
+
+    scrollbar = ttk.Scrollbar(new_htp_window, orient="vertical", command=tree_of_htp.yview)
+    scrollbar.grid(row=0, column=10, sticky="ns")
+    tree_of_htp.configure(yscrollcommand=scrollbar.set)
+
+    info_text_htp = tk.Text(new_htp_window, wrap="word", width=40, height=13)
+    info_text_htp.grid(row=18, column=0, padx=10, pady=10, rowspan=3, sticky='w')
+
+    def get_excel(file_name):
+        nonlocal info_text_htp
+        try:
+            # Load the xlsx file
+            excel_data = pd.read_excel(f'{file_name}.xlsx')
+            # Read the values of the file in the dataframe
+            data = pd.DataFrame(excel_data)
+            info = "\n".join(list(data['Отчет о регистрации данных с объекта управления'])[1:4])
+            data = data.iloc[6:].values
+            for row in data:
+                row = list(row)
+                tree_of_htp.insert('', tk.END, values=row)
+
+            info_text_htp.insert(tk.END, info)
+            
+                    
+        except:
+            messagebox.showerror("Ошибка имени файла", "Такого файла не существует")
+
+    file_label_name = tk.Label(new_htp_window, text="Введите имя файла:")
+    file_label_name.grid(row=19, column=8, padx=10, pady=5)
+
+    entry_name = tk.Entry(new_htp_window)
+    entry_name.grid(row=19, column=9, padx=10, pady=5)
+
+    button_load_xls = tk.Button(new_htp_window, text="Загрузить из excel", width=20, height=3, command = lambda :get_excel(entry_name.get()))
+    button_load_xls.grid(row=20, column=9, padx=10, pady=5, rowspan=2)
 
 
 def open_data_management_window():
@@ -266,7 +331,7 @@ def open_data_management_window():
     # Разместите таблицу внизу окна
     tree_of_mean.grid(row=9, column=0, columnspan=10, padx=10, pady=10, sticky='w')
     info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
-    info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+    info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3, sticky='w')
         
 
 
