@@ -141,23 +141,26 @@ def open_registration_window():
     center_window(new_registration_window)
     data = []
     columns = tuple(conf.keys())
-    tree = ttk.Treeview(new_registration_window, show="headings", columns=columns)
+    tree = ttk.Treeview(new_registration_window, show="headings", columns=columns, height=20)
     def out_data():
+        nonlocal comm_label
         nonlocal tree
         nonlocal columns
         nonlocal data
         data = 0
         data = []
         count = int(frames_entry.get())
-	# Очистка всех элементов в Treeview
+
+	    # Очистка всех элементов в Treeview
         for item in tree.get_children():
             tree.delete(item)
+
         for i in range(0,count):
             data.append([i+1]+get_data()['result'])
             
             errors = get_data()['errors']
             if len(errors )!=0:
-                messagebox.showerror("Ошибка авторизации", errors)
+                messagebox.showerror("Ошибка", errors)
           
         for column in columns:
         	tree.heading(f'{column}', text=column)
@@ -170,33 +173,41 @@ def open_registration_window():
         	tree.column(column, width = 70,stretch=True)
 
     	# Упаковываем Treeview
-        tree.pack(expand=True, fill='both')
+        # tree.pack(expand=True, fill='both')
+        tree.grid(row=15, column=0, columnspan=10, padx=10, pady=10)
+        scrollbar = ttk.Scrollbar(new_registration_window, orient="vertical", command=tree.yview)
+        scrollbar.grid(row=15, column=10, sticky="ns")
+        tree.configure(yscrollcommand=scrollbar.set)
 
-        def safe_data():
-            nonlocal data
+    def safe_data():
+        nonlocal data
+        if data !=[]:
             user_login = signAndLog.check_signed_users()
             user_id = signAndLog.get_userid_by_login(user_login)
             addDataToDB.add_data_in_table(data, user_id, datetime.datetime.now(), comm_entry.get())
-        	
-        comm_label = tk.Label(new_registration_window, text="Комментарий:")
-        comm_label.pack(side=tk.LEFT, padx=5, pady=5)
-
-        comm_entry = tk.Entry(new_registration_window)
-        comm_entry.pack(side=tk.LEFT, padx=5, pady=5)
-
-        start_button = tk.Button(new_registration_window, text="Сохранить", command=safe_data)
-        start_button.pack(side=tk.LEFT, padx=5, pady=5)
+        else:
+            messagebox.showerror("Ошибка", "Сначала необходимо провести опрос")
         
 
     # Создание и размещение виджетов
-    frames_label = tk.Label(new_registration_window, text="Число кадров:")
-    frames_label.pack(side=tk.LEFT, padx=5, pady=5)
+    frames_label = tk.Label(new_registration_window, text="Число кадров:", width=15)
+    frames_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-    frames_entry = tk.Entry(new_registration_window)
-    frames_entry.pack(side=tk.LEFT, padx=5, pady=5)
+    frames_entry = tk.Entry(new_registration_window, width=15)
+    frames_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-    start_button = tk.Button(new_registration_window, text="Начать опрос", command=out_data)
-    start_button.pack(side=tk.LEFT, padx=5, pady=5)
+    start_button = tk.Button(new_registration_window, text="Начать опрос", command=out_data, width = 15)
+    start_button.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+    comm_label = tk.Label(new_registration_window, text="Комментарий:", width=15)
+    comm_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+
+    comm_entry = tk.Entry(new_registration_window, width=15)
+    comm_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+    save_button = tk.Button(new_registration_window, text="Сохранить", command=safe_data, width = 15)
+    save_button.grid(row=1, column=2, padx=5, pady=5, sticky="w")
+
 
 
 
@@ -218,7 +229,7 @@ def open_data_management_window():
     user_id = 0
     new_data_management_window = tk.Toplevel(root)
     new_data_management_window.title("Окно управления данными")
-    new_data_management_window.geometry("1280x800")
+    new_data_management_window.geometry("1100x850")
     center_window(new_data_management_window)
 
     columns = tuple(conf.keys())
@@ -235,12 +246,28 @@ def open_data_management_window():
     # tree.insert("", "end", values=("1", "John", "30", "New York"))
 
     # Разместите таблицу внизу окна
-    tree.grid(row=2, column=0, columnspan=10, padx=10, pady=10)
+    tree.grid(row=2, column=0, columnspan=10, padx=10, pady=10, sticky='w')
 
     # Добавьте прокрутку для таблицы при необходимости
     scrollbar = ttk.Scrollbar(new_data_management_window, orient="vertical", command=tree.yview)
-    scrollbar.grid(row=2, column=10, sticky="ns")
+    scrollbar.grid(row=2, column=9, sticky="ns")
     tree.configure(yscrollcommand=scrollbar.set)
+
+    tree_of_mean = ttk.Treeview(new_data_management_window, columns=columns[:-2], show="headings", height=1)
+
+    # Устанавливаем заголовки для колонок
+    for col in columns[:-2]:
+        tree_of_mean.heading(col, text=col)
+    # Установим автоматическое масштабирование ширины колонок
+    for column in tree_of_mean['columns']:
+        tree_of_mean.column(column, width = 80, stretch=True)
+    # Заполните таблицу данными, если это необходимо
+    # Пример добавления данных
+    # Разместите таблицу внизу окна
+    tree_of_mean.grid(row=9, column=0, columnspan=10, padx=10, pady=10, sticky='w')
+    info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
+    info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+        
 
 
     def combobox_changed(event):
@@ -266,6 +293,7 @@ def open_data_management_window():
             column_means = np.mean(data_array, axis=0)
             column_means = np.round(column_means,2)
             means = {
+                "Средние значения": 0,
                 "Cреднее для Канала 1": 0,
                 "Cреднее для Канала 2": 0,
                 "Cреднее для Канала 3": 0,
@@ -277,14 +305,17 @@ def open_data_management_window():
                 "Cреднее для Канала 54": 0,
                 "Cреднее для Канала 65": 0,
             }
-            means  = dict(zip(means, column_means[1:]))
-            info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
-            info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
+            means  = dict(zip(means, column_means))
+            means["Средние значения"] = "Средние значения"
             s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
             for i,v in means.items():
-                s += f'{i}:{v}\n'
+                if i!="Средние значения":
+                    s += f'{i}:{v}\n'
             # Добавляем текст в виджет Text
             info_text.insert(tk.END, s)
+
+            tree_of_mean.insert('', tk.END, values=tuple(means.values()))
+
 
 
         selected_value = dropdown.get()
@@ -403,16 +434,12 @@ def open_data_management_window():
             	"Cреднее для Канала 65": 0,
         	}
         	means  = dict(zip(means, column_means[1:]))
-        	info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
-        	info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
         	s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
         	for i,v in means.items():
             		s += f'{i}:{v}\n'
         	# Добавляем текст в виджет Text
         	info_text.insert(tk.END, s)
         else:
-        	info_text = tk.Text(new_data_management_window, wrap="word", width=40, height=13)
-        	info_text.grid(row=10, column=0, padx=10, pady=10, rowspan=3)
         	s = 'Комментарий:'+addDataToDB.get_exp_comment(selected_date)+'\n'
         	info_text.insert(tk.END, s)
 
@@ -449,19 +476,23 @@ def open_data_management_window():
         messagebox.showinfo('Запись успешна','Запись успешна')
 
     def excel_window():
-        excel_window = tk.Toplevel(root)
-        excel_window.title("Окно записи")
-        excel_window.geometry("300x100")
-        center_window(excel_window)
-        excel_window.resizable(False, False)
+        nonlocal data
+        if data == []:
+            messagebox.showerror("Ошибка", "Сначала выберите эксперимент")
+        else:
+            excel_window = tk.Toplevel(root)
+            excel_window.title("Окно записи")
+            excel_window.geometry("300x100")
+            center_window(excel_window)
+            excel_window.resizable(False, False)
 
-        label_name = tk.Label(excel_window, text="Введите имя файла:")
-        label_name.grid(row=0, column=0, padx=10, pady=10)
+            label_name = tk.Label(excel_window, text="Введите имя файла:")
+            label_name.grid(row=0, column=0, padx=10, pady=10)
 
-        entry_name = tk.Entry(excel_window)
-        entry_name.grid(row=1, column=0, padx=10, pady=10)
-        button_3 = tk.Button(excel_window, text="Записать в excel", width=20, height=3, command = lambda: data_to_excel(entry_name.get()))
-        button_3.grid(row=0, column=1, padx=10, pady=10, rowspan=2)
+            entry_name = tk.Entry(excel_window)
+            entry_name.grid(row=1, column=0, padx=10, pady=10)
+            button_3 = tk.Button(excel_window, text="Записать в excel", width=20, height=3, command = lambda: data_to_excel(entry_name.get()))
+            button_3.grid(row=0, column=1, padx=10, pady=10, rowspan=2)
 
 
 
