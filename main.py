@@ -256,6 +256,7 @@ def open_htp_window():
     tree_of_htp.configure(yscrollcommand=scrollbar.set)
 
     info_text_htp = tk.Text(new_htp_window, wrap="word", width=40, height=13)
+    
     info_text_htp.grid(row=18, column=0, padx=10, pady=10, rowspan=3, sticky='w')
 
     def get_excel(file_name):
@@ -267,6 +268,7 @@ def open_htp_window():
             data = pd.DataFrame(excel_data)
             info = "\n".join(list(data['Отчет о регистрации данных с объекта управления'])[1:4])
             data = data.iloc[6:].values
+            info_text_htp.delete('1.0', tk.END)
             for row in data:
                 row = list(row)
                 tree_of_htp.insert('', tk.END, values=row)
@@ -345,6 +347,7 @@ def open_data_management_window():
             # Очистка всех элементов в Treeview
             for item in tree.get_children():
                 tree.delete(item)
+            info_text.delete('1.0', tk.END)
 
             selected_date = dropdown_3.get()
             data = addDataToDB.get_exp_by_date(selected_date)
