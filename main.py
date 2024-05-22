@@ -269,6 +269,8 @@ def open_htp_window():
             info = "\n".join(list(data['Отчет о регистрации данных с объекта управления'])[1:4])
             data = data.iloc[6:].values
             info_text_htp.delete('1.0', tk.END)
+            for item in tree_of_htp.get_children():
+                tree_of_htp.delete(item)
             for row in data:
                 row = list(row)
                 tree_of_htp.insert('', tk.END, values=row)
